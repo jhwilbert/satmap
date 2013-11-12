@@ -52,13 +52,32 @@ function plotSatellite(data) {
     scene.add(particleEnd);
     
 }
+
+function drawAsParticles(data) {
+    var geometry = new THREE.Geometry();
+    var x,y,z;
+    for ( i = 0; i < data.X.length; i ++ ) {
+
+        x = data.X[i]/earthRadiusKm * 1000;
+        y = data.Y[i]/earthRadiusKm * 1000;
+        z = data.Z[i]/earthRadiusKm * 1000;
+        geometry.vertices.push(new THREE.Vector3(x, y, z));
+        console.debug(x,y,z)
+    }
+    material = new THREE.ParticleBasicMaterial({ color: 0xffffff, size: 4 });
+   
+    particles = new THREE.ParticleSystem( geometry, material );
+    scene.add( particles );
+    				
+}
+
 function getLocation(id,startTime,endTime) {
     
     var timeReqXml = '<TimeInterval><Start>' + startTime +'</Start><End>' + endTime + '</End></TimeInterval>';     // Time format: 1997-08-26T00:00:00.000Z
     var satReqXml = '<Satellites><Id>' + id + '</Id>' + '<ResolutionFactor>2</ResolutionFactor></Satellites>';
     var request = dataReqXml1 + timeReqXml + dataReqXml2 + satReqXml + dataReqXml3;    
     
-    console.debug("XML Request",request);
+    //console.debug("XML Request",request);
     
     var xmlRequest = $.ajax({
         type: 'POST',
@@ -76,7 +95,8 @@ function handleLocations(data) {
     
     if(data.Result.StatusCode == "Success") {
         console.debug("SUCCESS Satellite:",data.Result.Data.Id, " ",data.Result);     // If can get current locations store in array
-        plotSatellite(data.Result.Data.Coordinates)
+        //plotSatellite(data.Result.Data.Coordinates);
+        drawAsParticles(data.Result.Data.Coordinates);
         
     } else {
         console.debug("FAILED: Satellite:",data.Result.StatusCode,data.Result.StatusSubCode);
@@ -107,24 +127,19 @@ function handleObservatories(data) {
     console.debug("Could fetch:",data.Observatory.length,"satellites");
     console.debug("Sats are:",data);
     
-    // var sat1 = data.Observatory[3].Id;
-    // var sat2 = data.Observatory[15].Id;
-    // var sat3 = data.Observatory[50].Id;
-    
-    //getLocation(sat1,elStartTime,elEndTime);
-    //getLocation(sat2,elStartTime,elEndTime);
-    //getLocation(sat3,elStartTime,elEndTime);
-    
+    // Get all satellites
     $.each(data.Observatory, function(index,value) {
-        elId = data.Observatory[index].Id;
         
+        
+        
+        elId = data.Observatory[index].Id;        
         startTime = removeOneHour(data.Observatory[index].EndTime); // remove one hour
         endTime = data.Observatory[index].EndTime;
-        
-        getLocation(elId,startTime,endTime);
-        
-        //console.debug(startTime.
+        getLocation(elId,startTime,endTime); // new API call
     });
+    
+    
+    
     
 }
 
@@ -138,7 +153,7 @@ Date.prototype.removeHours= function(h){
 function removeOneHour(str) {
     // "2013-11-03T22:00:00.000Z"
     str = str.substring(0, str.length - 5);
-    var date = new Date(str).removeHours(1);
+    var date = new Date(str).removeHours(24);
     return date.toISOString();
 }
 

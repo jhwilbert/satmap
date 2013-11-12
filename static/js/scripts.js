@@ -22,7 +22,9 @@ function init() {
   addClouds();
   addStructure();
   
-  renderer = new THREE.CanvasRenderer();
+  //renderer = new THREE.CanvasRenderer();
+  renderer = new THREE.WebGLRenderer();
+  
   renderer.setSize( window.innerWidth, window.innerHeight);
   renderer.setClearColorHex(0x111111);
   var container = document.getElementById("container");

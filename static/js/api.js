@@ -54,20 +54,33 @@ function getLocation(id,startTime,endTime) {
     var timeReqXml = '<TimeInterval><Start>' + startTime +'</Start><End>' + endTime + '</End></TimeInterval>';  // Time format: 1997-08-26T00:00:00.000Z
     var satReqXml = '<Satellites><Id>' + id + '</Id>' + '<ResolutionFactor>2</ResolutionFactor></Satellites>';
     var request = dataReqXml1 + timeReqXml + dataReqXml2 + satReqXml + dataReqXml3;    
-
-
     
     $.ajax({
         type: 'POST',
         url: sscUrl + '/locations', 
         data: request,
-        dataType: 'json',
+        dataType: 'xml',
         contentType: 'application/xml',
         processData: false,
-        success: handleLocations, 
+        success: handleXML, 
     });
 }
 
+function handleXML(data) {
+    var json_data = $.xml2json(data);
+    
+    if(json_data.Result.StatusCode == "Success") {  
+        console.debug("SUCCESS Satellite:",json_data.Result.Data.Id, " ",json_data.Result);     // If can get current locations store in array
+        plotSatellite(json_data.Result.Data.Coordinates,json_data.Result.Data.Id);
+        createOrbitPos(json_data.Result.Data);
+        drawAsParticles(json_data.Result.Data.Coordinates,json_data.Result.Data.Id);
+        //satsystem.addSatellite(json_data.Result.Data);
+        hasData = true;
+    } else {
+        console.debug("FAILED: Satellite:",json_data.Result.StatusCode,json_data.Result.StatusSubCode);
+    }
+    
+}
 
 
 function handleLocations(data) {
